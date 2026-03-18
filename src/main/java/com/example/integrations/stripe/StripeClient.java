@@ -5,12 +5,10 @@ import java.util.Map;
 
 /**
  * Stripe integration client.
- * WARNING: Uses deprecated Charges API (removed in Stripe API v12).
- * Should be migrated to PaymentIntents API.
+ * Migrated to PaymentIntents API.
  */
 public class StripeClient {
 
-    private static final String STRIPE_API_URL = "https://api.stripe.com/v1/charges";
     private final String apiKey;
 
     public StripeClient(String apiKey) {
@@ -18,59 +16,66 @@ public class StripeClient {
     }
 
     /**
-     * Create a charge using the legacy Charges API.
-     * DEPRECATED: Stripe removed this in favour of PaymentIntents.
+     * Create a Payment Intent. This replaces the legacy Charges API.
      */
-    public Map<String, Object> createCharge(int amountInCents, String currency, String source) {
+    public Map<String, Object> createPaymentIntent(int amountInCents, String currency, String source) {
         Map<String, Object> params = new HashMap<>();
         params.put("amount", amountInCents);
         params.put("currency", currency);
-        params.put("source", source);
-        params.put("description", "Charge via legacy API");
+        // For Payment Intents, 'source' is usually a PaymentMethod ID or token.
+        // Assuming 'source' can be mapped to a payment_method ID/token for this simulation.
+        params.put("payment_method", source);
+        params.put("confirm", true); // To immediately attempt to confirm the payment
+        params.put("description", "PaymentIntent via updated API");
 
-        // POST to /v1/charges
-        System.out.println("POST " + STRIPE_API_URL);
-        System.out.println("amount=" + amountInCents + ", currency=" + currency);
+        String url = "https://api.stripe.com/v1/payment_intents";
+        System.out.println("POST " + url);
+        System.out.println("amount=" + amountInCents + ", currency=" + currency + ", payment_method=" + source);
 
-        // Simulated response
+        // Simulated response for a succeeded PaymentIntent
         Map<String, Object> response = new HashMap<>();
-        response.put("id", "ch_123456789");
-        response.put("object", "charge");
+        response.put("id", "pi_simulatedPaymentIntentId");
+        response.put("object", "payment_intent");
         response.put("amount", amountInCents);
         response.put("currency", currency);
         response.put("status", "succeeded");
+        response.put("client_secret", "pi_simulatedPaymentIntentId_secret_xyz");
         return response;
     }
 
     /**
-     * Retrieve a charge by ID.
-     * DEPRECATED: Use PaymentIntent retrieval instead.
+     * Retrieve a Payment Intent by ID. Replaces legacy Charge retrieval.
      */
-    public Map<String, Object> retrieveCharge(String chargeId) {
-        String url = STRIPE_API_URL + "/" + chargeId;
+    public Map<String, Object> retrievePaymentIntent(String paymentIntentId) {
+        String url = "https://api.stripe.com/v1/payment_intents/" + paymentIntentId;
         System.out.println("GET " + url);
 
+        // Simulated response for a PaymentIntent
         Map<String, Object> response = new HashMap<>();
-        response.put("id", chargeId);
-        response.put("object", "charge");
+        response.put("id", paymentIntentId);
+        response.put("object", "payment_intent");
         response.put("status", "succeeded");
+        response.put("amount", 1000); // Placeholder amount
+        response.put("currency", "usd"); // Placeholder currency
         return response;
     }
 
     /**
-     * Refund a charge using the old refunds endpoint.
+     * Create a refund for a Payment Intent. Replaces refunding a Charge.
      */
-    public Map<String, Object> refundCharge(String chargeId) {
+    public Map<String, Object> createRefundForPaymentIntent(String paymentIntentId) {
         String url = "https://api.stripe.com/v1/refunds";
         Map<String, Object> params = new HashMap<>();
-        params.put("charge", chargeId);
+        params.put("payment_intent", paymentIntentId); // Link refund to PaymentIntent
 
-        System.out.println("POST " + url + " charge=" + chargeId);
+        System.out.println("POST " + url + " payment_intent=" + paymentIntentId);
 
+        // Simulated response for a Refund
         Map<String, Object> response = new HashMap<>();
-        response.put("id", "re_123456789");
+        response.put("id", "re_simulatedRefundId");
         response.put("object", "refund");
         response.put("status", "succeeded");
+        response.put("payment_intent", paymentIntentId);
         return response;
     }
 }
